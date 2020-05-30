@@ -1,8 +1,8 @@
 # sallow
-A heuristic algorithm for finding treedepth decompositions.
+A heuristic algorithm for finding [treedepth decompositions](https://en.wikipedia.org/wiki/Tree-depth).
 
 This is a submition for the [PACE 2020](https://pacechallenge.org/2020/td/) challenge.
-Named after [Salix caprea](https://en.wikipedia.org/wiki/Salix_caprea), a willow shrub/tree. 
+Sallows (such as ([Salix caprea](https://en.wikipedia.org/wiki/Salix_caprea)) are a kind of willow shrubs/trees. 
 
 ![A sallow tree](https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/20170421Salix_caprea1.jpg/640px-20170421Salix_caprea1.jpg)
 
@@ -23,4 +23,5 @@ Standard CMake:
 ## Running
 * `sallow input.gr`
 * Interrupt (ctrl+C or SIGINT) to stop and print the best decomposition we have.
+* If it hangs (e.g. you ran it in debug mode on extremely large graphs), you need to `pkill -9 sallow`.
 * Input and output format as specified [here](https://pacechallenge.org/2020/td/) (DIMACS-like).
