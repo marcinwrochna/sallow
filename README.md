@@ -1,4 +1,6 @@
 # sallow
+[![DOI](https://zenodo.org/badge/268122113.svg)](https://zenodo.org/badge/latestdoi/268122113)
+
 A heuristic algorithm for finding [treedepth decompositions](https://en.wikipedia.org/wiki/Tree-depth).
 
 This is a submission for the [PACE 2020](https://pacechallenge.org/2020/td/) challenge.
