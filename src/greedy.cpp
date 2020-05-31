@@ -15,14 +15,10 @@ int degeneracy(const BasicOneBasedGraph& graph) {
     for (VertexID v : graph.vertices())
         initVector.push_back(graph[v].size());
     MinHeap heap(initVector);
-    Ordering ordering;
-    ordering.reserve(graph.nVertices());
     int maxDeg = 0;
     while (!heap.empty()) {
         int u, deg;
         std::tie(u, deg) = heap.pop();
-        assert(!contains(ordering, u));
-        ordering.push_back(u);
         if (deg > maxDeg)
             maxDeg = deg;
         for (const VertexID v : graph[u])

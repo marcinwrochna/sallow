@@ -56,12 +56,7 @@ class FlowCutter
     std::vector<int> flowEndpointsT;
     bool clearedParentS, clearedParentT; // Whether parentS, parentT are cleared (i.e. parentS=0 if not in S).
     Queue<int> queue; // Queue reused by all BFSs.
-    int sizeBoundedS, sizeBoundedT; // Value of sizeS/sizeT when we last updated bounds on S/T.
-    std::vector<int> layerSizeS, layerSizeT; // Number of vertices with given distS/T.
 public:
-    Bounds boundsS, boundsT; // Upper and lower bounds on the treedepth of S/T.
-    int sizeBoundedReachS, sizeBoundedReachT; // Value of sizeReachS/sizeReachT when we last updated bounds on reachS/reachT.
-    Bounds boundsReachS, boundsReachT; // Upper and lower bounds on the treedepth of reachS/reachT.
     YieldCutCallback yieldCutCallback; // Called in yieldCutS/yieldCutT.
 
     int cutoff; // We already have a treedepth decomposition of this depth, stop if we can't improve it,

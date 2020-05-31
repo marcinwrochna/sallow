@@ -5,8 +5,8 @@ project (Sallow
 
 # Options that affect libraries as well.
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -DNDEBUG")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O3 -march=native -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O3 -march=ivybridge -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=ivybridge -DNDEBUG")
 
 add_subdirectory(libs/GSL)
 
@@ -55,7 +55,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	# `target_link_options` requires CMake >= 3.13, otherwise just add this to link_libraries instead
 	# To enable LeakSanitizer: set -fsanitize=address,leak here and update ASAN_OPTIONS in .vscode/launch.json.
 elseif(CMAKE_BUILT_TYPE STREQUAL "RelWithDebInfo")
-	target_compile_options(sallow PRIVATE -DNDEBUG -O3 -march=native -DWITHGPERFTOOLS -g -fno-omit-frame-pointer ${W_FLAGS})
+	target_compile_options(sallow PRIVATE -DNDEBUG -O3 -march=ivybridge -DWITHGPERFTOOLS -g -fno-omit-frame-pointer ${W_FLAGS})
 	target_link_options(sallow PRIVATE -lprofiler -g)
 	set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 else()

@@ -330,7 +330,7 @@ bool MainAlgo::doCut(double balance, int push, int cStrength) {
         } else if (reason == FlowCutter::EndReason::badST) {
             continue; // Retry.
         }
-        if (!cut.empty() && cut.size() + std::max(flowCutter->boundsS.lower, flowCutter->boundsT.lower) < badCutoff)
+        if (!cut.empty() && cut.size() + 1 < badCutoff)
             break;
     }
     if (cut.empty())

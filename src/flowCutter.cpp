@@ -12,13 +12,13 @@
 // MAYBE replace vector with static containers (std::vector<int> is 6*sizeof(int), maybe gsl::dyn_array would work).
 
 FlowCutter::FlowCutter(const BasicOneBasedGraph& graph_, Environment& environment_) :
-    graph(graph_),
-    environment(environment_),
-    vertices(graph.nVertices() + 1),
-    distS(graph.nVertices() + 1),
-    distT(graph.nVertices() + 1),
-    queue(graph.nVertices() + 1),
-    cutoff(graph.nVertices()) {
+        graph(graph_),
+        environment(environment_),
+        vertices(graph.nVertices() + 1),
+        distS(graph.nVertices() + 1),
+        distT(graph.nVertices() + 1),
+        queue(graph.nVertices() + 1),
+        cutoff(graph.nVertices()) {
     for (VertexID u : graph.vertices()) {
         vertices[u].neigh.reserve(graph[u].size());
         for (VertexID v : graph[u]) {
@@ -55,10 +55,6 @@ FlowCutter::EndReason FlowCutter::findCuts(int _s, int _t, int _cutoff, YieldCut
     addToT(t);
     flowEndpointsS.clear();
     flowEndpointsT.clear();
-    boundsS.lower = boundsS.upper = boundsT.lower = boundsT.upper = 1;
-    sizeBoundedS = sizeBoundedT = 1;
-    boundsReachS.lower = boundsReachS.upper = boundsReachT.lower = boundsReachT.upper = 1;
-    sizeBoundedReachS = sizeBoundedReachT = 1;
 
     // MAYBE try starting with a larger greedy flow.
 
@@ -73,7 +69,7 @@ FlowCutter::EndReason FlowCutter::findCuts(int _s, int _t, int _cutoff, YieldCut
         if (pierceSideIsS) {
             int v;
             while ((v = bfsGrowParentS())) {
-                if (flowEndpointsS.size() + 1 + boundsS.lower >= cutoff)
+                if (flowEndpointsS.size() + 1 + 1 >= cutoff)
                     return EndReason::cutoff;
                 if (environment.signalled)
                     return EndReason::signal;
@@ -84,7 +80,7 @@ FlowCutter::EndReason FlowCutter::findCuts(int _s, int _t, int _cutoff, YieldCut
         } else { // Symmetric case.
             int v;
             while ((v = bfsGrowParentT())) {
-                if (flowEndpointsT.size() + 1 + boundsT.lower >= cutoff)
+                if (flowEndpointsT.size() + 1 + 1 >= cutoff)
                     return EndReason::cutoff;
                 if (environment.signalled)
                     return EndReason::signal;
@@ -137,9 +133,7 @@ FlowCutter::EndReason FlowCutter::findCuts(int _s, int _t, int _cutoff, YieldCut
 
 
 bool FlowCutter::choosePierceSide() {
-    int depthReachS = sizeReachS - sizeBoundedReachS + boundsReachS.upper;
-    int depthReachT = sizeReachT - sizeBoundedReachT +  boundsReachT.upper;
-    return depthReachS <= depthReachT;
+    return sizeReachS <= sizeReachT;
 }
 
 
@@ -151,20 +145,16 @@ void FlowCutter::yieldSoftCut([[maybe_unused]] std::vector<int> cut) {
 
 FlowCutter::EndReason FlowCutter::yieldCutS(EndReason r) {
     assert(checkIsCut(flowEndpointsS, s, t));
-    if (r == EndReason::none && flowEndpointsS.size() + 1 + boundsS.lower >= cutoff)
+    if (r == EndReason::none && flowEndpointsS.size() + 1 + 1 >= cutoff)
         r = EndReason::cutoff;
-    boundsS.upper += sizeS - sizeBoundedS;
-    sizeBoundedS = sizeS;
     return yieldCutCallback(flowEndpointsS, r, sizeS);
 }
 
 
 FlowCutter::EndReason FlowCutter::yieldCutT(EndReason r) {
     assert(checkIsCut(flowEndpointsT, s, t));
-    if (r == EndReason::none && flowEndpointsT.size() + 1 + boundsT.lower >= cutoff)
+    if (r == EndReason::none && flowEndpointsT.size() + 1 + 1 >= cutoff)
         r = EndReason::cutoff;
-    boundsT.upper += sizeT - sizeBoundedT;
-    sizeBoundedT = sizeT;
     return yieldCutCallback(flowEndpointsT, r, sizeT);
 }
 
@@ -289,8 +279,6 @@ int FlowCutter::bfsGrowParentS() {
     assert(vertices[pierceS].inS);
 
     sizeReachS = sizeS - 1;  // Count pierceS only once, when popping from queue.
-    boundsReachS = boundsS; // Reset bounds on reachS.
-    sizeBoundedReachS = sizeBoundedS;
     queue.clear();
     queue.push(pierceS);
     while (!queue.empty()) {
@@ -375,15 +363,6 @@ void FlowCutter::bfsGrowInS() {
         assert(vertices[u].boundaryS);
         vertices[u].inflow = u;
     }
-
-    // Now S == reachS, so we can update bounds.
-    if (sizeBoundedReachS >= sizeBoundedS) {
-        boundsS.upper += sizeBoundedReachS - sizeBoundedS;
-        sizeBoundedS = sizeBoundedReachS;
-        boundsS.updateUpper(boundsReachS.upper);
-        boundsS.updateLower(boundsReachS.lower);
-        boundsReachS = boundsS;
-    }
 }
 
 
@@ -394,8 +373,6 @@ int FlowCutter::bfsGrowParentT() {
     assert(vertices[pierceT].inT);
 
     sizeReachT = sizeT - 1;  // Count pierceT only when popping from queue.
-    boundsReachT = boundsT; // Reset bounds on reachT.
-    sizeBoundedReachT = sizeBoundedT;
     queue.clear();
     queue.push(pierceT);
     while (!queue.empty()) {
@@ -479,15 +456,6 @@ void FlowCutter::bfsGrowInT() {
         }
         assert(vertices[u].boundaryT);
         vertices[u].outflow = u;
-    }
-
-    // Now T == reachT, so we can update bounds.
-    if (sizeBoundedReachT >= sizeBoundedT) {
-        boundsT.upper += sizeBoundedReachT - sizeBoundedT;
-        sizeBoundedT = sizeBoundedReachT;
-        boundsT.updateUpper(boundsReachT.upper);
-        boundsT.updateLower(boundsReachT.lower);
-        boundsReachT = boundsT;
     }
 }
 
@@ -626,9 +594,6 @@ void FlowCutter::initDistS() {
     while (!queue.empty()) {
         int u = queue.pop();
         int dist = distS[u];
-        while (dist >= layerSizeS.size())
-            layerSizeS.push_back(0);
-        ++layerSizeS[dist];
         for (const int v : vertices[u].neigh) {
             if (distS[v] >= 0)
                 continue;
@@ -636,7 +601,6 @@ void FlowCutter::initDistS() {
             queue.push(v);
         }
     }
-    // fprintf(stderr, "layerSizeS: %s\n", toString(layerSizeS).c_str());
 }
 
 
@@ -649,9 +613,6 @@ void FlowCutter::initDistT() {
     while (!queue.empty()) {
         int u = queue.pop();
         int dist = distT[u];
-        while (dist >= layerSizeT.size())
-            layerSizeT.push_back(0);
-        ++layerSizeT[dist];
         for (const int v : vertices[u].neigh) {
             if (distT[v] >= 0)
                 continue;
@@ -659,7 +620,6 @@ void FlowCutter::initDistT() {
             queue.push(v);
         }
     }
-    // fprintf(stderr, "layerSizeT: %s\n", toString(layerSizeT).c_str());
 }
 
 
