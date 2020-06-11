@@ -1,7 +1,9 @@
 # sallow
+[![DOI](https://zenodo.org/badge/268122113.svg)](https://zenodo.org/badge/latestdoi/268122113)
+
 A heuristic algorithm for finding [treedepth decompositions](https://en.wikipedia.org/wiki/Tree-depth).
 
-This is a submition for the [PACE 2020](https://pacechallenge.org/2020/td/) challenge.
+This is a submission for the [PACE 2020](https://pacechallenge.org/2020/td/) challenge.
 The algorithm relies on:
 * a variety of greedy elimination algorithms, and
 * Divide & Conquer along cuts obtained using a from-scratch reimplementation of Ben Strasser's [2016 FlowCutter](https://github.com/ben-strasser/flow-cutter-pace16),
@@ -26,10 +28,11 @@ Standard CMake:
 * `cmake --config Release ..` (or whatever the path to the root CMakeLists.txt is, instead of `..`)
 * `make`
 * Or just open the directory in [MSVS Code](https://code.visualstudio.com/) with the [CMake extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools) installed, and allow it to configure itself.
+* CMake ≥ 3.13 and g++ ≥ 7 or clang ≥ 4 (that is, supporting C++17) are required.
 
 ## Running
 * `sallow input.gr`
-* Interrupt (ctrl+C or SIGINT) to stop and print the best decomposition we have.
+* Interrupt (ctrl+c or SIGINT) to stop and print the best decomposition we have.
 * If it hangs (e.g. you ran it in debug mode on extremely large graphs), you need to `pkill -9 sallow`.
 * Input and output format as specified [here](https://pacechallenge.org/2020/td/) (DIMACS-like).
 * See there also for test instances.
