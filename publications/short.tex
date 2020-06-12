@@ -11,11 +11,9 @@
 \usepackage{textcomp}
 \usepackage{float}
 \usepackage{subfig}
-\usepackage{nopageno}
 \usepackage{enumitem}
 \usepackage{tikz}
 \usepackage{xspace}
-\usepackage{comment}
 \usepackage{bm}
 \usetikzlibrary{backgrounds,plothandlers,plotmarks}
 \usepackage[ruled,vlined]{algorithm2e}
@@ -90,7 +88,7 @@
 	\href{http://doi.org/10.5281/zenodo.3870565}{10.5281/zenodo.3870565}	
 	
 	\medskip
-	We describe a heuristic algorithm for computing treedepth decompositions, submitted for the \href{https://pacechallenge.org/2020}{PACE 2020} challenge. It relies on a variety of greedy algorithms computing elimination orderings, as well as a Divide \& Conquer approach on balanced cuts obtained using a from-scratch reimplementation of the 2016 FlowCutter algorithm by Hamann \& Strasser's FlowCutter~\cite{HamannS18}.
+	We describe a heuristic algorithm for computing treedepth decompositions, submitted for the \href{https://pacechallenge.org/2020}{PACE 2020} challenge. It relies on a variety of greedy algorithms computing elimination orderings, as well as a Divide \& Conquer approach on balanced cuts obtained using a from-scratch reimplementation of the 2016 FlowCutter algorithm by Hamann \& Strasser~\cite{HamannS18}.
 \end{abstract}
 
 
@@ -105,13 +103,12 @@ repeatedly remove the last vertex in the ordering and turn its neighbourhood int
 The $\parent$ of the removed vertex is set to the latest vertex in the neighbourhood.
 
 It is easy to check this results in a new valid treedepth decomposition.
-To show that its depth is at most the original depth, 
-observe that by induction, at any point in the elimination process, 
-the neighbourhood of the removed vertex consists only of its ancestors (in the original decomposition)
+Moreover, turning a decomposition into an ordering and back cannot increase the depth.
+To see this, observe that by induction, at any point in the elimination process,
+the neighbourhood of the removed vertex consists only of its ancestors (in the original decomposition),
 because all later vertices were removed,
 hence all introduced edges are still in the ancestor-descendant relationship.
-This implies in particular that the new parent of each vertex is an ancestor in the original decomposition,
-so the depth can only decrease.
+This implies in particular that the new parent of each vertex is an ancestor in the original decomposition.
 
 A more static look at the elimination process is through \emph{strongly} and \emph{weakly} reachable vertices.
 Fix a vertex $v$.
@@ -156,7 +153,7 @@ In the elimination process, we update the score of a vertex $v$ based on (a line
 \begin{itemize}
 \item its height (one plus the max height of neighbours eliminated so far; once we decide to eliminate $v$ this becomes the height of the subtree rooted at $v$ in the resulting decomposition);
 \item its degree (in the partially eliminated graph; once we decide to eliminate $v$ this becomes $|\SReach_{\infty}[G,L,v]|$ in the resulting ordering);
-\item the original score.
+\item some initial, static score.
 \end{itemize} 
 
 Consider a graph with $n$ vertices, $m$ edges, and suppose we stop when unable to obtain a decomposition of depth better than $d$.
@@ -165,11 +162,11 @@ Simulating it then requires $\Theta(nd^2)$ time and space in the worst case,
 because the graph can have that many edges in the middle of the process.
 This bound is also sufficient; to do the simulation we maintain neighbourhood lists of the partially eliminated graph
 as \texttt{std::vector}s sorted by vertex name (not by the ordering we're about to compute), so that the union of neighbourhoods can be computed by merge-sort (when turning $v$'s neighbourhood into a clique).
-Note however that we cannot compute parents of the fly, since the ordering of unprocessed vertices is not yet decided;
+Note however that we cannot compute parents on the fly, since the ordering of unprocessed vertices is not yet decided;
 we do this in a second pass, using the faster building approach once the ordering is fixed.
 See Algorithm~\ref{alg:elim} below.
 
-For the original score, the final implementation only uses the height of vertices in the best previously obtained decomposition.
+For the initial score, the final implementation only uses the height of vertices in the best previously obtained decomposition.
 For the parameters $\alpha,\beta,\gamma$ that give the linear combination defining the score,
 the best choice for a single run seems to be to choose non-zero $\alpha$, much larger $\beta$, while $\gamma$ can be zero (e.g. $\langle1,9,0\rangle$).
 On the other hand, repeating the algorithm with a variety of different parameters often finds significantly better solutions.
@@ -181,7 +178,7 @@ On the other hand, repeating the algorithm with a variety of different parameter
  }
  \texttt{ordering} := $\langle\rangle$\\
  \texttt{height} := $\langle 1,\dots,1\rangle$\\ 
- initialize heap with $v \quad \mapsto \quad \alpha \cdot |\texttt{g}[v]|\ +\ \beta \cdot 1\ +\ \gamma \cdot \texttt{score}[v]$\\
+ initialize heap with $v \quad \mapsto \quad \alpha \cdot |\texttt{g}[v]|\ +\ \beta \cdot \texttt{height}[v]\ +\ \gamma \cdot \texttt{score}[v]$\\
  \While{\normalfont heap not empty}{
   $v$ := pop minimum element from top of heap\\
   \texttt{ordering} := $v$, \texttt{ordering}\\
@@ -207,7 +204,7 @@ Instead, the building process can be simulated in $\Oh(\min(m \cdot \alpha(n), n
 We note that this also allows to check the correctness of a treedepth decomposition (by replacing the assignment $\parent[y] := v$ with whatever the original parent was and checking it is a descendant of $v$) in the same running time;
 this can be significantly faster than the straightforward $\Oh(md)$ method when $d$ is large.
 
-The details are similar as in Algorithm~\ref{alg:elim}.
+The details are similar as in Algorithm~\ref{alg:elim}, see Algorithm~\ref{alg:build}.
 One change is that $\texttt{g}[v]$ does not represent the neighbourhood of a vertex after elimination;
 instead, it represents the graph after contracting processed components.
 For a root vertex $r$ of a component $C$ (starting from singleton components), $\texttt{g}[r]$ stores the neighbours of that component.
@@ -270,7 +267,7 @@ However, we can significantly improve this super-fast version with a simple look
 Instead of processing the last unprocessed vertex, we check the last $\ell$ unprocessed vertices, compute what their height would be at this point, and choose the minimum height.
 For $\ell=2$ this is almost as fast as a DFS;
 for $\ell=64$ this is still faster than other versions and results in significantly better depth than DFS, often giving a reasonable ballpark estimate.
-Nevertheless we essentially always use the full version of Algorithm~\ref{alg:build}, unless we know that the super-fast estimates are good enough (e.g. in recursive runs).
+Nevertheless we essentially always use the full version of Algorithm~\ref{alg:build} as well, unless we know that the super-fast estimates are good enough (e.g. in recursive runs).
 
 \subsection{By building with lookahead}
 A similar idea can be used to get the best of the elimination and building versions.
@@ -308,7 +305,10 @@ It starts with greedy algorithms and then takes the first cut of at least a give
 Afterwards FlowCutter is ran again, without using the fact that in one run it can output several cuts of increasing balance and size.
 Recursive results are also never used again, instead the algorithm just runs in a loop with more and more costly recursions.
 
-To speed this up a final feature is that of cutoffs.
+We attempted modifying FlowCutter to judge balance not based on sizes of the two sides, but on estimates of their treedepth (using callbacks).
+It appears this did not bring significant improvements to the final result, so this modification is turned off in the submitted version.
+
+To speed things up a final feature is that of cutoffs.
 A bad cutoff $d$ tells the algorithm to abandon any attempt that won't lead to a decomposition of depth strictly smaller than $d$.
 For example we use the best know decomposition's depth as a bad cutoff most of the time.
 A good cutoff $d$ tells the algorithm to return as soon as it can output a decomposition of depth at most $d$.
@@ -317,7 +317,7 @@ The estimates obtained at early phases of the algorithm are also used to cut rec
 We also use a lower bound based on the degeneracy of a graph and the longest path found in a DFS to quickly finish in some easy cases.
 
 \subsection*{Acknowledgements}
-The author is very grateful to the \href{https://pacechallenge.org/2020}{PACE 2020} organizers at the University of Warsaw and the OPTIL.io team at the Poznan University of Technology for making this challenge possible.
+The author is very grateful to the \href{https://pacechallenge.org/2020}{PACE 2020} organizers at the University of Warsaw and the OPTIL.io team at the Poznań University of Technology for making this challenge possible.
 
 \pagebreak
 
