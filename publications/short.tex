@@ -279,7 +279,7 @@ We can stop as soon as the top vertex stays at the top after re-evaluation, so e
 For $\ell=1024$, this results in an algorithm that seems just as good as greedy by elimination, yet avoids the heavy memory usage in huge graphs of large treedepth.
 
 All in all, on the public instances of the PACE 2020 challenge, the total score (sum of $\frac{\text{best known depth}}{\text{algorithm's depth}}$ over all tests) and total running time was roughly (with $\langle\alpha,\beta,\gamma\rangle=\langle 1,9,0\rangle$):
-\begin{itemize}
+\begin{itemize}[itemsep=0pt,parsep=-1ex]
 \item 37\% in 1 minute for the ``super-fast greedy'' version with $\ell=64$,\\
 \item 63\% in 8 minutes for the basic ``greedy by building'' version (Algorithm~\ref{alg:build}),\\
 \item 72\% in 15 minutes for the ``building with lookahead $\ell=1024$'' version,\\
@@ -318,6 +318,13 @@ We also use a lower bound based on the degeneracy of a graph and the longest pat
 
 \subsection*{Acknowledgements}
 The author is very grateful to the \href{https://pacechallenge.org/2020}{PACE 2020} organizers at the University of Warsaw and the OPTIL.io team at the Poznań University of Technology for making this challenge possible.
+This project has received funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation programme (grant agreement No 714532, PI: Stanislav \v{Z}ivn\'{y}).
+\begin{picture}(0,0)
+\put(392,10)
+{\hbox{\includegraphics[width=40px]{logo-erc.jpg}}}
+\put(382,-50)
+{\hbox{\includegraphics[width=60px]{logo-eu.pdf}}}
+\end{picture}
 
 \pagebreak
 
