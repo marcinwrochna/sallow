@@ -6,42 +6,26 @@
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amsthm}
-\usepackage{url}
 \usepackage{hyperref}
-\usepackage{textcomp}
 \usepackage{float}
-\usepackage{subfig}
 \usepackage{enumitem}
-\usepackage{tikz}
-\usepackage{xspace}
 \usepackage{bm}
-\usetikzlibrary{backgrounds,plothandlers,plotmarks}
 \usepackage[ruled,vlined]{algorithm2e}
-
-
-\newcommand{\theTitle}{Sallow -- a heuristic algorithm for treedepth decompositions}
 
 \newcommand{\RR}{\ensuremath{\mathbb{R}}}
 \newcommand{\ZZ}{\ensuremath{\mathbb{Z}}}
 \newcommand{\NN}{\ensuremath{\mathbb{N}}}
-\newcommand{\Def}{\textbf{Def}\ }
-\newcommand{\Th}{\textbf{Thm}\ }
-\newcommand{\Fact}{\textbf{Fact}\ }
-\newcommand{\cc}{\ensuremath{\circ}\ }
-\newcommand{\bb}{\ensuremath{\bullet}\ }
 \newcommand{\Oh}{\ensuremath{\mathcal{O}}}
 \DeclareMathOperator{\td}{td}
 \DeclareMathOperator{\wcol}{wcol}
 \DeclareMathOperator{\pw}{pw}
 \let\tw\relax
 \DeclareMathOperator{\tw}{tw}
-\DeclareMathOperator{\cw}{cw}
-\DeclareMathOperator{\ctw}{ctw}
-\DeclareMathOperator{\bw}{bw}
 \DeclareMathOperator{\poly}{poly}
 \DeclareMathOperator{\SReach}{SReach}
 \DeclareMathOperator{\WReach}{WReach}
-\newcommand{\ve}[1]{\ensuremath{\mathbf{#1}}}
+\DeclareMathOperator{\parent}{\texttt{parent}}
+\DeclareMathOperator{\ordering}{\texttt{ordering}}
 
 
 %%====== Bibliography handling ================================================
@@ -67,14 +51,13 @@
 
 
 
-\title{\theTitle}
+\title{Sallow: a heuristic algorithm for treedepth decompositions}
 \author{Marcin Wrochna}
 \affil{University of Oxford}
 \date{June 2020}
-\keywords{}
+\keywords{treedepth,decomposition,heuristic,weak colouring numbers}
 
-\DeclareMathOperator{\parent}{\texttt{parent}}
-\DeclareMathOperator{\ordering}{\texttt{ordering}}
+
 
 \begin{document}
 
@@ -131,7 +114,7 @@ The $\infty$ here is customary because considering only paths of length at most 
 A third, more efficient look at the elimination process comes from the observation that 
 descendants of $v$, in the resulting treedepth decomposition, are exactly vertices reachable in the subgraph induced by vertices later than or equal to $v$ (in the ordering).
 We can thus define a \emph{building process} on an ordering as follows:
-we process vertices starting from the last, maintaining connected components of the subgraph induced by vertices process so far.
+we process vertices starting from the last, maintaining connected components of the subgraph induced by vertices processed so far.
 This is sufficient to build the same treedepth decomposition, without changing the graph:
 we maintain the treedepth decomposition of the subgraph induced by processed vertices
 (using a $\parent$ vector)
@@ -143,6 +126,10 @@ To update the decomposition,
 we find the root of $y$'s component and make it a child of~$v$,
 which thus becomes the new root.
 Thus $y$'s parent is the latest weakly reachable vertex, as expected.
+
+In other words, the building process consider vertices in the same order as the elimination process.
+However, in the elimination process we maintain a graph on unprocessed vertices and when eliminating the next vertex, we replace its neighborhood by a clique, which is somewhat costly.
+Instead, in the building process we maintain a graph on more and more processed vertices (hence the name), or rather a structure to represent its connected components.
 
 \section{Greedy algorithms}
 The elimination and building processes suggest heuristics for finding treedepth decomposition.
@@ -158,13 +145,15 @@ In the elimination process, we update the score of a vertex $v$ based on (a line
 
 Consider a graph with $n$ vertices, $m$ edges, and suppose we stop when unable to obtain a decomposition of depth better than $d$.
 In the elimination process, we can then assume that the neighbourhood of every vertex at every step is smaller than $d$.
-Simulating it then requires $\Theta(nd^2)$ time and space in the worst case,
-because the graph can have that many edges in the middle of the process.
+Simulating it then requires $\Theta(nd^2)$ time in many cases: e.g. if most vertices have a neighbourhood of size $\Theta(d)$ at the time they are processed (as in $K_{d,n}$), ensuring that this neighbourhood becomes a clique takes $\Theta(d^2)$ time.
 This bound is also sufficient; to do the simulation we maintain neighbourhood lists of the partially eliminated graph
 as \texttt{std::vector}s sorted by vertex name (not by the ordering we're about to compute), so that the union of neighbourhoods can be computed by merge-sort (when turning $v$'s neighbourhood into a clique).
 Note however that we cannot compute parents on the fly, since the ordering of unprocessed vertices is not yet decided;
 we do this in a second pass, using the faster building approach once the ordering is fixed.
 See Algorithm~\ref{alg:elim} below.
+
+The memory requirement is $\Theta(nd)$ in the worst case and this cannot be improved to $\Oh(m)$, because a random $3$-regular graph on $d$ vertices will have, after eliminating half of its vertices, a clique on $\Theta(d)$ vertices and $\Theta(d^2)$ edges (due to its expansion properties).
+This means memory usage can also be prohibitive for large graphs with expected treedepth $d$ much larger than the average degree.
 
 For the initial score, the final implementation only uses the height of vertices in the best previously obtained decomposition.
 For the parameters $\alpha,\beta,\gamma$ that give the linear combination defining the score,
@@ -196,11 +185,11 @@ On the other hand, repeating the algorithm with a variety of different parameter
  \label{alg:elim}
 \end{algorithm}
 
-\pagebreak[4] 
+\pagebreak[3] 
 
 \subsection{By building}
-The $\Theta(nd^2)$ time and space bound of the elimination process can be prohibitive for huge graphs of large treedepth.
-Instead, the building process can be simulated in $\Oh(\min(m \cdot \alpha(n), n d))$ time by maintaining components with the classic union-find data structure (where $\alpha$ is the inverse Ackerman function~\cite{TarjanL84} and the latter bound follows from the fact that for each vertex, its pointer in the structure only goes up the tree).
+The $\Theta(nd^2)$ time and $\Theta(nd)$ space bound of the elimination process can be prohibitive for huge graphs of large treedepth.
+Instead, the building process can be simulated in $\Oh(\min(m \cdot \alpha(n), n d))$ time and $\Oh(m)$ space by maintaining components with the classic union-find data structure (where $\alpha$ is the inverse Ackerman function~\cite{TarjanL84} and the latter bound follows from the fact that for each vertex, its pointer in the structure only goes up the tree).
 We note that this also allows to check the correctness of a treedepth decomposition (by replacing the assignment $\parent[y] := v$ with whatever the original parent was and checking it is a descendant of $v$) in the same running time;
 this can be significantly faster than the straightforward $\Oh(md)$ method when $d$ is large.
 
@@ -230,7 +219,7 @@ This theoretically spoils the $m \alpha(n)$ running time guarantee, but simplifi
  \texttt{parent} := $\langle\bot,\dots,\bot\rangle$\\ 
  \texttt{ancestor} := $\langle\bot,\dots,\bot\rangle$\\  
  \texttt{height} := $\langle 1,\dots,1\rangle$\\ 
- initialize heap with $v \quad \mapsto \quad \alpha \cdot |\texttt{g}[v]|\ +\ \beta \cdot 1\ +\ \gamma \cdot \texttt{score}[v]$\\
+ initialize heap with $v \quad \mapsto \quad \alpha \cdot |\texttt{g}[v]|\ +\ \beta \cdot \texttt{height}[v]\ +\ \gamma \cdot \texttt{score}[v]$\\
  \While{\normalfont heap not empty}{
   $v$ := pop minimum element from top of heap\\
   \texttt{ordering} := $v$, \texttt{ordering}\\
@@ -240,7 +229,7 @@ This theoretically spoils the $m \alpha(n)$ running time guarantee, but simplifi
   		$r$ := find($y$) in the \texttt{ancestor} union-find structure\\
   		\eIf{$r \neq v$}{
   			$\texttt{parent}[r]$ := $v$\\
-  			$\texttt{ancestor}[r]$ := $u$ \quad (union)\\
+  			$\texttt{ancestor}[r]$ := $v$ \quad (union)\\
 			$\texttt{g}[v]$ := $(\texttt{g}[r] - v) \cup (\texttt{g}[v] - y)$\\
 			clear $\texttt{g}[r]$
   		}{
@@ -267,7 +256,7 @@ However, we can significantly improve this super-fast version with a simple look
 Instead of processing the last unprocessed vertex, we check the last $\ell$ unprocessed vertices, compute what their height would be at this point, and choose the minimum height.
 For $\ell=2$ this is almost as fast as a DFS;
 for $\ell=64$ this is still faster than other versions and results in significantly better depth than DFS, often giving a reasonable ballpark estimate.
-Nevertheless we essentially always use the full version of Algorithm~\ref{alg:build} as well, unless we know that the super-fast estimates are good enough (e.g. in recursive runs).
+Nevertheless we essentially always use the full version of Algorithm~\ref{alg:build} as well, unless we know that the super-fast estimates are good enough (e.g. in recursive runs where other branches are already deeper).
 
 \subsection{By building with lookahead}
 A similar idea can be used to get the best of the elimination and building versions.
@@ -310,14 +299,14 @@ It appears this did not bring significant improvements to the final result, so t
 
 To speed things up a final feature is that of cutoffs.
 A bad cutoff $d$ tells the algorithm to abandon any attempt that won't lead to a decomposition of depth strictly smaller than $d$.
-For example we use the best know decomposition's depth as a bad cutoff most of the time.
-A good cutoff $d$ tells the algorithm to return as soon as it can output a decomposition of depth at most $d$.
-For example we use the maximum depth in sibling branches computed so far.
+For example, we use the best know decomposition's depth as a bad cutoff most of the time.
+A good cutoff $d$ tells the algorithm to return as soon as it can output a decomposition of depth at most~$d$.
+For example, we use the maximum depth in sibling branches computed so far.
 The estimates obtained at early phases of the algorithm are also used to cut recursion attempts that are unlikely to yield better decompositions.
 We also use a lower bound based on the degeneracy of a graph and the longest path found in a DFS to quickly finish in some easy cases.
 
 \subsection*{Acknowledgements}
-The author is very grateful to the \href{https://pacechallenge.org/2020}{PACE 2020} organizers at the University of Warsaw and the OPTIL.io team at the Poznań University of Technology for making this challenge possible.
+The author is very grateful to the \href{https://pacechallenge.org/2020}{PACE 2020} organizers at the University of Warsaw, organizers of past editions, and the OPTIL.io team~\cite{WasikABLS16} at the Poznań University of Technology for making this challenge possible.
 This project has received funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation programme (grant agreement No 714532, PI: Stanislav \v{Z}ivn\'{y}).
 \begin{picture}(0,0)
 \put(392,10)
@@ -326,7 +315,7 @@ This project has received funding from the European Research Council (ERC) under
 {\hbox{\includegraphics[width=60px]{logo-eu.pdf}}}
 \end{picture}
 
-\pagebreak
+%\pagebreak
 
 \printbibliography
 
